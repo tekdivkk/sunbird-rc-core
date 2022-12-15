@@ -83,7 +83,7 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
-  providerName: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
+  providerName: ${search_providerName:dev.sunbirdrc.registry.service.ElasticSearchService}
 
 # This property is to be used for read request
 read:
@@ -284,9 +284,9 @@ elastic:
     connection_url: ${elastic_search_connection_url:localhost:9200}
     add_shard_prefix: ${elastic_search_add_shard_prefix:true}
     #if authentication is enabled
-    auth_enabled: ${elastic_search_auth_enabled:true}
+    auth_enabled: ${elastic_search_auth_enabled:false}
     elastic_username: ${elastic_search_username:elastic}
-    elastic_password: ${elastic_search_password:DkIedPPSCb}
+    elastic_password: ${elastic_search_password:XXXXXX}
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
   accesskey: ${filestorage_access_key:XXXXX}
