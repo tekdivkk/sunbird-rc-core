@@ -6,11 +6,13 @@ services:
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ELASTIC_PASSWORD=${ELASTIC_SEARCH_PASSWORD}
+      - xpack.security.enabled=${ELASTIC_SECURITY_ENABLED}
     ports:
       - "9200:9200"
       - "9300:9300"
     healthcheck:
-      test: ["CMD", "curl", "-f", "localhost:9200/_cluster/health"]
+      test: [ "CMD", "curl", "-f", "localhost:9200/_cluster/health", "--header",  "Authorization: Basic ZWxhc3RpYzpEa0llZFBQU0Ni" ]
       interval: 30s
       timeout: 10s
       retries: 4
@@ -34,6 +36,9 @@ services:
       - elastic_search_connection_url=es:9200
       - search_providerName=dev.sunbirdrc.registry.service.ElasticSearchService
       - sunbird_sso_realm=sunbird-rc
+      - elastic_search_username=elastic
+      - elastic_search_auth_enabled=true
+      - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
       - sunbird_sso_url=http://keycloak:8080/auth
       - sunbird_sso_admin_client_id=admin-api
       - sunbird_sso_client_id=registry-frontend
