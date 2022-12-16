@@ -100,8 +100,11 @@ public class ElasticServiceImpl implements IElasticService {
         credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(userName, password));
         if (!esClient.containsKey(indexName)) {
+            // KeyValue key is port and value is scheme type.
             Map<String, KeyValue<Integer, String>> hostPort = new HashMap<>();
             for (String info : connectionInfo.split(",")) {
+                // use URL to get sceme/protocol if defined else fall back to earlier mechanism
+                // of configuring host/port
                 try {
                     URL url = new URL(info);
                     hostPort.put(url.getHost(), new DefaultKeyValue<>(url.getPort(), url.getProtocol()));
@@ -404,6 +407,10 @@ public class ElasticServiceImpl implements IElasticService {
         this.password = password;
     }
 
+    /**
+     * set default scheme used in setting protocol for RestHighEndClient
+     * @param scheme
+     */
     public void setScheme(String scheme) {
         this.defaultScheme = scheme;
     }
