@@ -132,6 +132,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String username;
 	@Value("${elastic.search.elastic_password}")
 	private String password;
+	@Value("${elastic.search.scheme}")
+	private String scheme;
 	@Value("${notification.service.connection_url}")
 	private String notificationServiceConnInfo;
 	@Value("${search.providerName}")
@@ -421,6 +423,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			elasticService.setAuthEnabled(Boolean.parseBoolean(authEnabled));
 			elasticService.setUserName(username);
 			elasticService.setPassword(password);
+			elasticService.setScheme(scheme);
 			elasticService.init(definitionsManager.getAllKnownDefinitions(), definitionsManager.getExcludingFields());
 		}
 		return elasticService;
