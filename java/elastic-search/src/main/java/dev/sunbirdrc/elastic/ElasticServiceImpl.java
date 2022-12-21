@@ -515,7 +515,3 @@ public class ElasticServiceImpl implements IElasticService {
         this.defaultScheme = scheme;
     }
 }
-
-
-
-
