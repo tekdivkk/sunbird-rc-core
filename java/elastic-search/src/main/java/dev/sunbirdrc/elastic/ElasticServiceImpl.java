@@ -116,7 +116,8 @@ public class ElasticServiceImpl implements IElasticService {
             for (String host : hostPort.keySet()) {
                 httpHosts.add(new HttpHost(host, hostPort.get(host).getKey(), hostPort.get(host).getValue()));
             }
-            RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()]));
+
+            RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()])).setPathPrefix("/elastic");
             if(authEnabled) {
                 restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
             }
