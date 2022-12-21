@@ -11,9 +11,16 @@ import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +35,8 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -51,6 +60,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 
+import javax.net.ssl.SSLContext;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class ElasticServiceImpl implements IElasticService {
     private static Map<String, Set<String>> indexWiseExcludeFields = new HashMap<>();
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
@@ -59,9 +77,12 @@ public class ElasticServiceImpl implements IElasticService {
     private static String connectionInfo;
     private static String searchType;
     private static boolean authEnabled;
+    //private static boolean pathPrefixSet;
     private static String userName;
     private static String password;
     private static String defaultScheme;
+
+    private static boolean sslByPassSet = false;
 
     public void setConnectionInfo(String connection) {
         connectionInfo = connection;
@@ -88,6 +109,58 @@ public class ElasticServiceImpl implements IElasticService {
         });
     }
 
+    /**
+     * Ideally this needs to be set via configuration
+     * In case ssl certificates are not part of chain
+     * locally created we need mechanism to allow for
+     * bypassing them.
+     *
+     * This method will treat all ssl context as valid.
+     */
+    /*static void byPassSSL() {
+        if (sslByPassSet)
+            return;
+        logger.info("By Pass SSL");
+        TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] arg0, String arg1)
+                            throws CertificateException {}
+
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] arg0, String arg1)
+                            throws CertificateException {}
+                }
+        };
+
+        SSLContext sc = null;
+        try {
+            sc = SSLContext.getInstance("SSL");
+            logger.info("ssl context set...");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        try {
+            assert sc != null;
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        // Create all-trusting host name verifier
+        HostnameVerifier validHosts = (arg0, arg1) -> {
+            logger.info("verify host: {}", arg0);
+            logger.info("ssl session: {}", arg1);
+            return true;
+        };
+        // All hosts will be valid
+        HttpsURLConnection.setDefaultHostnameVerifier(validHosts);
+        sslByPassSet = true;
+    }*/
+
 
     /**
      * This method creates the high-level-client w.r.to index, if client is not created. for every index one client object is created
@@ -95,10 +168,11 @@ public class ElasticServiceImpl implements IElasticService {
      * @param indexName      for ElasticSearch
      * @param connectionInfo of ElasticSearch
      */
-    private static void createClient(String indexName, String connectionInfo) {
+    private static void createClient(String indexName, String connectionInfo) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, KeyManagementException {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(userName, password));
+        boolean usingSSH = defaultScheme.equalsIgnoreCase("https");
         if (!esClient.containsKey(indexName)) {
             // KeyValue key is port and value is scheme type.
             Map<String, KeyValue<Integer, String>> hostPort = new HashMap<>();
@@ -107,6 +181,7 @@ public class ElasticServiceImpl implements IElasticService {
                 // of configuring host/port
                 try {
                     URL url = new URL(info);
+                    usingSSH |= url.getProtocol().equalsIgnoreCase("https");
                     hostPort.put(url.getHost(), new DefaultKeyValue<>(url.getPort(), url.getProtocol()));
                 } catch (Exception e) {
                     hostPort.put(info.split(":")[0], new DefaultKeyValue<>(Integer.valueOf(info.split(":")[1]), defaultScheme));
@@ -116,9 +191,29 @@ public class ElasticServiceImpl implements IElasticService {
             for (String host : hostPort.keySet()) {
                 httpHosts.add(new HttpHost(host, hostPort.get(host).getKey(), hostPort.get(host).getValue()));
             }
+
+            KeyStore trustStore = KeyStore.getInstance("jks");
+
+            InputStream is = new FileInputStream("/home/sunbirdrc/BOOT-INF/classes/truststore.jks");
+            trustStore.load(is, "changeit".toCharArray());
+
+            SSLContextBuilder sslContextBuilder = SSLContexts.custom().loadTrustMaterial(trustStore, null);
+
+            SSLContext sslContext = sslContextBuilder.build();
+
+            /*if (usingSSH)
+                byPassSSL();*/
             RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()]));
+
+
+            /*if (pathPrefixSet) {
+                restClientBuilder.setPathPrefix(pathPrefix);
+            }*/
             if(authEnabled) {
-                restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+                restClientBuilder.setHttpClientConfigCallback(
+                        httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider)
+                                .setSSLContext(sslContext)
+                );
             }
             RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
             if (null != client)
@@ -132,10 +227,15 @@ public class ElasticServiceImpl implements IElasticService {
      * @param indexName of ElasticSearch
      * @return
      */
-    private static RestHighLevelClient getClient(String indexName) {
+    private static RestHighLevelClient getClient(String indexName)  {
         logger.info("connection info: index:{} connectioninfo:{}", indexName, connectionInfo);
         if (null == esClient.get(indexName)) {
-            createClient(indexName, connectionInfo);
+            try {
+                createClient(indexName, connectionInfo);
+            } catch (Exception any) {
+                logger.warn("Failed to create client: {}", any.getMessage(), any);
+                return null;
+            }
         }
         logger.info("resthighclient obj:" + esClient.get(indexName));
         return esClient.get(indexName);
@@ -223,12 +323,12 @@ public class ElasticServiceImpl implements IElasticService {
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public Map<String, Object> readEntity(String index, String osid) throws IOException {
         logger.debug("readEntity starts with index {} and entityId {}", index, osid);
-        
+
         GetResponse response = null;
         response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
         return response.getSourceAsMap();
     }
-    
+
 
     /**
      * Updates the document with updated inputEntity
@@ -382,7 +482,7 @@ public class ElasticServiceImpl implements IElasticService {
                 break;
             case notEndsWith:
                 query = query.mustNot(QueryBuilders.wildcardQuery(field, "*" + value));
-                break;                
+                break;
             case queryString:
                 query = query.must(QueryBuilders.queryStringQuery(value.toString()));
                 break;
@@ -415,3 +515,7 @@ public class ElasticServiceImpl implements IElasticService {
         this.defaultScheme = scheme;
     }
 }
+
+
+
+
