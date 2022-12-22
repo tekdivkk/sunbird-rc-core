@@ -281,15 +281,15 @@ elastic:
     # elastic-search can be enable and disable through this flag
     enabled: ${elastic_search_enabled:false}
     # elastic-search connection info
-    connection_url: ${elastic_search_connection_url:https://elasticsearch-enterprise-5e64b9ca19f6b37b.elb.ap-south-1.amazonaws.com:9200/}
+    connection_url: ${elastic_search_connection_url:localhost:9200/}
     add_shard_prefix: ${elastic_search_add_shard_prefix:true}
     #if authentication is enabled
     auth_enabled: ${elastic_search_auth_enabled:true}
     elastic_username: ${elastic_search_username:elastic}
-    elastic_password: ${elastic_search_password:Rainbows$Ponies#987}
+    elastic_password: ${elastic_search_password:elastic}
     scheme: ${elastic_search_scheme:https}
     jksFilePath: ${elastic_search_jksFilePath:D:\TEKDI\Sunbird-RC\SSL-RC\truststore.jks}
-    trustStorePassword: ${elastic_search_trustStorePassword:changeit}
+    trustStorePassword: ${elastic_search_trustStorePassword:password}
 
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
