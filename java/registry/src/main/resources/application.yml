@@ -281,7 +281,7 @@ elastic:
     # elastic-search can be enable and disable through this flag
     enabled: ${elastic_search_enabled:false}
     # elastic-search connection info
-    connection_url: ${elastic_search_connection_url:localhost:9200/}
+    connection_url: ${elastic_search_connection_url:localhost:9200}
     add_shard_prefix: ${elastic_search_add_shard_prefix:true}
     #if authentication is enabled
     auth_enabled: ${elastic_search_auth_enabled:true}
