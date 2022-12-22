@@ -286,10 +286,10 @@ elastic:
     #if authentication is enabled
     auth_enabled: ${elastic_search_auth_enabled:true}
     elastic_username: ${elastic_search_username:elastic}
-    elastic_password: ${elastic_search_password:XXXXXXX}
+    elastic_password: ${elastic_search_password:Rainbows$Ponies#987}
     scheme: ${elastic_search_scheme:https}
     jksFilePath: ${elastic_search_jksFilePath:D:\TEKDI\Sunbird-RC\SSL-RC\truststore.jks}
-    trustStorePassword: ${elastic_search_trustStorePassword:XXXX}
+    trustStorePassword: ${elastic_search_trustStorePassword:changeit}
 
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
