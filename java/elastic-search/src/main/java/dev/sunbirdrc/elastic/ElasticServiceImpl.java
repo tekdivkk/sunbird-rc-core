@@ -199,7 +199,7 @@ public class ElasticServiceImpl implements IElasticService {
             KeyStore trustStore = KeyStore.getInstance("jks");
 
             InputStream is = new FileInputStream(jksFilePath);
-            trustStore.load(is, "changeit".toCharArray());
+            trustStore.load(is, trustStorePassword.toCharArray());
 
             SSLContextBuilder sslContextBuilder = SSLContexts.custom().loadTrustMaterial(trustStore, null);
 
