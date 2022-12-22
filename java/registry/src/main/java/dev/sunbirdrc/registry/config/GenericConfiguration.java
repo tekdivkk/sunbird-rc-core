@@ -134,6 +134,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String password;
 	@Value("${elastic.search.scheme}")
 	private String scheme;
+
+	@Value("${elastic.search.jksFilePath}")
+	private String jksFilePath;
+
+	@Value("${elastic.search.trustStorePassword}")
+	private String trustStorePassword;
 	@Value("${notification.service.connection_url}")
 	private String notificationServiceConnInfo;
 	@Value("${search.providerName}")
@@ -419,11 +425,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 		if (isElasticSearchEnabled()) {
 			elasticService.setType(Constants.ES_DOC_TYPE);
-			elasticService.setConnectionInfo(elasticConnInfo);  https://host:port,host:port,host2:port2
+			elasticService.setConnectionInfo(elasticConnInfo);  //https://host:port,host:port,host2:port2
 			elasticService.setAuthEnabled(Boolean.parseBoolean(authEnabled));
 			elasticService.setUserName(username);
 			elasticService.setPassword(password);
 			elasticService.setScheme(scheme);
+			elasticService.setJksFilePath(jksFilePath);
+			elasticService.setTrustStorePassword(trustStorePassword);
 			elasticService.init(definitionsManager.getAllKnownDefinitions(), definitionsManager.getExcludingFields());
 		}
 		return elasticService;

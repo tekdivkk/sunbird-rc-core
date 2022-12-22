@@ -82,6 +82,10 @@ public class ElasticServiceImpl implements IElasticService {
     private static String password;
     private static String defaultScheme;
 
+    private static String jksFilePath;
+
+    private static String trustStorePassword;
+
     private static boolean sslByPassSet = false;
 
     public void setConnectionInfo(String connection) {
@@ -194,7 +198,7 @@ public class ElasticServiceImpl implements IElasticService {
 
             KeyStore trustStore = KeyStore.getInstance("jks");
 
-            InputStream is = new FileInputStream("/home/sunbirdrc/BOOT-INF/classes/truststore.jks");
+            InputStream is = new FileInputStream(jksFilePath);
             trustStore.load(is, "changeit".toCharArray());
 
             SSLContextBuilder sslContextBuilder = SSLContexts.custom().loadTrustMaterial(trustStore, null);
@@ -513,5 +517,13 @@ public class ElasticServiceImpl implements IElasticService {
      */
     public void setScheme(String scheme) {
         this.defaultScheme = scheme;
+    }
+
+    public void setJksFilePath(String jksFilePath) {
+        this.jksFilePath = jksFilePath;
+    }
+
+    public  void setTrustStorePassword(String trustStorePassword) {
+        this.trustStorePassword = trustStorePassword;
     }
 }
